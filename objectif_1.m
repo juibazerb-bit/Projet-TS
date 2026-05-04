@@ -1,5 +1,5 @@
 %% =====================================================================
-%  Projet TS1 - Objectif nÂ°1
+%  Projet TS1 - Objectif n°1
 %  Effet Doppler : estimation de la vitesse d'un vehicule a partir
 %  de l'enregistrement audio "son_1.wav".
 %
@@ -7,7 +7,7 @@
 %       f(t) = f0 * c / (c + v_r(t))
 %       v_r(t) = v^2 * (t - t1) / sqrt(d^2 + v^2*(t - t1)^2)
 %
-%  Auteurs : Nom Prenom
+%  Auteurs : VIVIAN Tom et PAUVERT Florian
 % =====================================================================
 
 clear; close all; clc;
@@ -31,14 +31,14 @@ fprintf('Duree    : %.2f s\n', N/Fs);
 
 %% --- 3. Spectrogramme (vue d'ensemble) ----------------------------------
 Nwin    = round(0.05 * Fs);         % fenetre 50 ms
-Noverl  = round(0.9  * Nwin);       % 90 % de recouvrement
+Noverl  = round(0.9  * Nwin);       % 90% de recouvrement
 Nfft    = 2^nextpow2(4*Nwin);       % zero-padding pour resolution
 
 figure('Name','Spectrogramme du son_1');
 spectrogram(x, hamming(Nwin), Noverl, Nfft, Fs, 'yaxis');
 ylim([3 5]);                        % zoom autour de 4 kHz
 title('Spectrogramme du signal son\_1.wav');
-colormap turbo;
+
 
 %% --- 4. Extraction de la frequence instantanee f(t) ---------------------
 %   On parcourt le signal par tranches, on calcule la FFT et on cherche
@@ -82,7 +82,7 @@ plot(t_f, f_t, '.', 'Color',[0.7 0.7 0.9]); hold on;
 plot(t_f, f_t_lisse, 'b-', 'LineWidth', 1.5);
 yline(f0, 'k--', 'f_0 = 4 kHz');
 xlabel('t (s)'); ylabel('f (Hz)');
-title('Evolution de la frequence percue par l''observateur');
+title('Evolution de la frequence percue par l''étudiant');
 legend('Mesure brute','Lissee','f_0','Location','best');
 grid on;
 
