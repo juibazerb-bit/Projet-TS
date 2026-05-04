@@ -40,37 +40,53 @@ ylim([3 5]);                        % zoom autour de 4 kHz
 title('Spectrogramme du signal son\_1.wav');
 
 
-%% --- 4. Extraction de la frequence instantanee f(t) ---------------------
-%   On parcourt le signal par tranches, on calcule la FFT et on cherche
-%   le pic spectral dans une bande [3.5 ; 4.5] kHz.
+%% --- 4. Extraction de la fréquence instantanée f(t) ---------------------
+% Objectif : Estimer l'évolution de la fréquence au cours du temps par 
+% une approche de type STFT (Short-Time Fourier Transform).
 
-Nseg = round(0.05 * Fs);            % duree d'une tranche (50 ms)
-hop  = round(Nseg/4);               % avance entre tranches (75 % overlap)
-nbSeg = floor((N - Nseg)/hop) + 1;
+% --- Paramétrage du découpage temporel ---
+Nseg = round(0.05 * Fs);            % Durée d'une fenêtre d'analyse : 50 ms (compromis temps/fréquence)
+hop  = round(Nseg/4);               % Pas de progression (Overlap de 75% pour assurer la continuité)
+nbSeg = floor((N - Nseg)/hop) + 1;   % Nombre total de segments à traiter
 
-t_f  = zeros(nbSeg, 1);
-f_t  = zeros(nbSeg, 1);
+% --- Initialisation des vecteurs de résultats ---
+t_f  = zeros(nbSeg, 1);             % Vecteur temps (milieu de chaque segment)
+f_t  = zeros(nbSeg, 1);             % Vecteur fréquence instantanée estimée
 
-w    = hamming(Nseg);
-NfftLoc = 2^nextpow2(8*Nseg);       % zero-padding generaux pour interpoler
-freqAxe = (0:NfftLoc-1).' * Fs/NfftLoc;
+% --- Préparation de l'analyse spectrale ---
+w    = hamming(Nseg);               % Fenêtre de Hamming pour limiter les lobes secondaires (fuite spectrale)
+NfftLoc = 2^nextpow2(8*Nseg);       % Zero-padding important (8x) pour augmenter la résolution fréquentielle
+freqAxe = (0:NfftLoc-1).' * Fs/NfftLoc; % Construction de l'axe des fréquences en Hz
+
+% Masque pour restreindre la recherche du pic entre 3,5 kHz et 4,5 kHz
 mask    = (freqAxe >= 3500) & (freqAxe <= 4500);
 
+% --- Boucle de traitement par segment ---
 for k = 1:nbSeg
+    % Extraction et fenêtrage du segment courant
     idx     = (k-1)*hop + (1:Nseg);
     seg     = x(idx) .* w;
-    X       = abs(fft(seg, NfftLoc));
-    Xband   = X .* mask;
-    [~, im] = max(Xband);
     
-    % Affinage du pic par interpolation parabolique
+    % Calcul du spectre en amplitude
+    X       = abs(fft(seg, NfftLoc));
+    Xband   = X .* mask;            % Application du filtre logiciel
+    [~, im] = max(Xband);           % Recherche de l'indice du maximum (fréquence brute)
+    
+    % --- Affinage du pic par interpolation parabolique ---
+    % On modélise le sommet du pic par une parabole pour trouver le maximum réel
+    % situé entre deux échantillons binaires de la FFT.
     if im > 1 && im < NfftLoc
         a = X(im-1); b = X(im); c2 = X(im+1);
+        % Formule de l'ajustement fractionnaire (estimateur de Quinn/Gasiorowski simplifié)
         delta = 0.5*(a - c2)/(a - 2*b + c2);
     else
         delta = 0;
     end
+    
+    % Conversion de l'indice (brut + ajusté) en fréquence physique (Hz)
     f_t(k) = (im - 1 + delta) * Fs / NfftLoc;
+    
+    % Calcul de l'instant temporel correspondant (centré sur la fenêtre)
     t_f(k) = ((k-1)*hop + Nseg/2) / Fs;
 end
 
