@@ -38,7 +38,7 @@ figure('Name','Spectrogramme du son_1');
 spectrogram(x, hamming(Nwin), Noverl, Nfft, Fs, 'yaxis');
 ylim([3 5]);                        % zoom autour de 4 kHz
 title('Spectrogramme du signal son\_1.wav');
-
+colormap jet;
 
 %% --- 4. Extraction de la fréquence instantanée f(t) ---------------------
 % Objectif : Estimer l'évolution de la fréquence au cours du temps par 
@@ -102,8 +102,8 @@ title('Evolution de la frequence percue par l''étudiant');
 legend('Mesure brute','Lissee','f_0','Location','best');
 grid on;
 
-%% --- 6. Vitesse radiale v_r(t) = c*(1 - (f0/f(t)) ) ------------------------
-v_r = c * (1-(f0 ./ f_t_lisse) );
+%% --- 6. Vitesse radiale v_r(t) = c*(f0/f(t) - 1) ------------------------
+v_r = c * (f0 ./ f_t_lisse - 1);
 
 figure('Name','Vitesse radiale v_r(t)');
 plot(t_f, v_r, 'r-', 'LineWidth', 1.5); hold on;
@@ -122,7 +122,7 @@ v_estime_asymp = mean(abs(v_r(masque_loin)));
 modele = @(p,tt) p(1)^2 .* (tt - t1) ./ sqrt(d^2 + p(1)^2*(tt - t1).^2);
 p0 = v_estime_asymp;
 opts = optimset('Display','off');
-[p_fit, ~] = lsqcurvefit(modele, p0, t_f, -v_r, 0, 100, opts);
+[p_fit, ~] = lsqcurvefit(modele, p0, t_f, v_r, 0, 100, opts);
 v_estime_fit = p_fit(1);
 
 % Methode 3 : par les frequences extremes (approche grossiere)

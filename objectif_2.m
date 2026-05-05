@@ -1,5 +1,5 @@
 %% =====================================================================
-%  Projet TS1 - Objectif nÂ°2
+%  Projet TS1 - Objectif n°2
 %  Effet Doppler avec parasites musicaux : filtrage du signal
 %  "son_2.wav" puis estimation de la vitesse du vehicule.
 %
@@ -7,7 +7,7 @@
 %       - filtre passe-bande IIR (Butterworth) centre autour de f0
 %       - largeur choisie pour englober la plage Doppler attendue
 %
-%  Auteurs : Nom Prenom
+%  Auteurs : VIVIAN Tom et PAUVERT Florian
 % =====================================================================
 
 clear; close all; clc;
@@ -32,13 +32,13 @@ Nfft    = 2^nextpow2(4*Nwin);
 figure('Name','Avant filtrage');
 spectrogram(x, hamming(Nwin), Noverl, Nfft, Fs, 'yaxis');
 title('son\_2.wav - signal brut (musique + Doppler)');
-colormap turbo;
+
 
 %% --- 4. Filtre passe-bande de Butterworth ------------------------------
 %   Plage utile : on encadre largement la frequence Doppler attendue.
-%   v ~ 30 m/s -> Df ~ +/- 350 Hz autour de 4 kHz, on prend une marge.
-fLow  = 3500;       % Hz
-fHigh = 4500;       % Hz
+%   v ~ 30 m/s -> Df ~ +/- 350 Hz autour de 4 kHz, on prend une marge donc +/- 450 Hz .
+fLow  = 3550;       % Hz
+fHigh = 4450;       % Hz
 ordre = 6;
 
 [bz, az] = butter(ordre, [fLow fHigh]/(Fs/2), 'bandpass');
@@ -46,8 +46,7 @@ ordre = 6;
 % Affichage de la reponse du filtre
 figure('Name','Reponse du filtre');
 freqz(bz, az, 4096, Fs);
-title(sprintf('Filtre passe-bande Butterworth ordre %d : [%d ; %d] Hz', ...
-              ordre, fLow, fHigh));
+title(sprintf('Filtre passe-bande Butterworth ordre %d : [%d ; %d] Hz',ordre, fLow, fHigh));
 
 % Filtrage a phase nulle (pour ne pas decaler le signal)
 xf = filtfilt(bz, az, x);
@@ -56,8 +55,8 @@ xf = filtfilt(bz, az, x);
 figure('Name','Apres filtrage');
 spectrogram(xf, hamming(Nwin), Noverl, Nfft, Fs, 'yaxis');
 ylim([3 5]);
-title('son\_2.wav apres filtrage passe-bande [3,5 - 4,5] kHz');
-colormap turbo;
+title('son\_2.wav apres filtrage passe-bande [3,55 - 4,45] kHz');
+
 
 %% --- 6. Suivi de la frequence instantanee ------------------------------
 Nseg = round(0.05 * Fs);
