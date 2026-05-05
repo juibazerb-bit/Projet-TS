@@ -102,8 +102,8 @@ title('Evolution de la frequence percue par l''étudiant');
 legend('Mesure brute','Lissee','f_0','Location','best');
 grid on;
 
-%% --- 6. Vitesse radiale v_r(t) = c*(1 - (f0/f(t)) ) ------------------------
-v_r = c * (1-(f0 ./ f_t_lisse) );
+%% --- 6. Vitesse radiale v_r(t) = c*(f0/f(t) - 1) ------------------------
+v_r = c * (f0 ./ f_t_lisse - 1);
 
 figure('Name','Vitesse radiale v_r(t)');
 plot(t_f, v_r, 'r-', 'LineWidth', 1.5); hold on;
@@ -122,7 +122,7 @@ v_estime_asymp = mean(abs(v_r(masque_loin)));
 modele = @(p,tt) p(1)^2 .* (tt - t1) ./ sqrt(d^2 + p(1)^2*(tt - t1).^2);
 p0 = v_estime_asymp;
 opts = optimset('Display','off');
-[p_fit, ~] = lsqcurvefit(modele, p0, t_f, -v_r, 0, 100, opts);
+[p_fit, ~] = lsqcurvefit(modele, p0, t_f, v_r, 0, 100, opts);
 v_estime_fit = p_fit(1);
 
 % Methode 3 : par les frequences extremes (approche grossiere)
@@ -130,16 +130,16 @@ f_max = max(f_t_lisse);
 f_min = min(f_t_lisse);
 v_estime_extr = c * (f_max - f_min) / (f_max + f_min);
 
-% Methode 4 : Estimation de la vitesse moyenne de la voiture par le maximum
-v_moyenne = max(abs(v_r)); % Approche simple par le maximum
+% 6. Estimation de la vitesse moyenne de la voiture
+v_moyenne = max(abs(vr)); % Approche simple par le maximum
 v_moyenne_kmh = v_moyenne * 3.6;
-
+fprintf('Objectif 1: Vitesse de la voiture = %.2f m/s (soit %.2f km/h)\n', v_moyenne, v_moyenne_kmh);
 
 fprintf('\n--- Estimation de la vitesse moyenne du vehicule ---\n');
 fprintf('Asymptotique  : %.2f m/s   (%.1f km/h)\n', v_estime_asymp, v_estime_asymp*3.6);
 fprintf('Ajustement    : %.2f m/s   (%.1f km/h)\n', v_estime_fit  , v_estime_fit  *3.6);
 fprintf('f_max / f_min : %.2f m/s   (%.1f km/h)\n', v_estime_extr , v_estime_extr *3.6);
-fprintf('max de v_r : %.2f m/s (soit %.2f km/h)\n', v_moyenne, v_moyenne_kmh);
+
 %% --- 8. Comparaison modele / mesure -------------------------------------
 v_r_modele = modele(p_fit, t_f);
 figure('Name','Modele vs mesure');
