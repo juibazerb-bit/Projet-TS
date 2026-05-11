@@ -44,8 +44,8 @@ title('Spectrogramme Le\_Mans\_2023.wav');
 %
 %   On parametre alors la suite avec les valeurs lues sur le graphique.
 
-fLow_band  = 400;          % a ajuster apres lecture du spectrogramme (Hz)
-fHigh_band = 1000;         % idem
+fLow_band  = 600;          % a ajuster apres lecture du spectrogramme (Hz)
+fHigh_band = 1200;         % idem
 t1_lu      = 1.45 ; %N/Fs/2;       % par defaut : milieu de l'enregistrement
 
 %% --- 4. Filtrage selectif autour de la raie principale -----------------
