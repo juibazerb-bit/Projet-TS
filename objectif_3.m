@@ -35,22 +35,17 @@ Nfft    = 2^nextpow2(8*Nwin);
 figure('Name','Spectrogramme Le Mans');
 spectrogram(x, hamming(Nwin), Noverl, Nfft, Fs, 'yaxis');
 title('Spectrogramme Le\_Mans\_2023.wav');
+colormap(copper);
 
-
-%   --> repondre visuellement aux questions suivantes avant de continuer :
-%       . quelle bande de frequence contient la raie principale ?
-%       . a quel instant t1 la voiture passe-t-elle devant le micro
-%         (transition du saut de frequence) ?
-%
-%   On parametre alors la suite avec les valeurs lues sur le graphique.
-
-fLow_band  = 600;          % a ajuster apres lecture du spectrogramme (Hz)
-fHigh_band = 1200;         % idem
-t1_lu      = 1.45 ; %N/Fs/2;       % par defaut : milieu de l'enregistrement
+fLow_band  = 200;          % a ajuster apres lecture du spectrogramme (Hz)
+fHigh_band = 450;    % idem
+t1_lu      = 1.5; %N/Fs/2;       % par defaut : milieu de l'enregistrement
 
 %% --- 4. Filtrage selectif autour de la raie principale -----------------
-[bz, az] = butter(6, [fLow_band fHigh_band]/(Fs/2), 'bandpass');
-xf = filtfilt(bz, az, x);
+[z,p,k] = butter(6, [fLow_band fHigh_band]/(Fs/2), 'bandpass');
+[sos ,g] = zp2sos(z,p,k);
+xf = filtfilt(sos,g, x);
+
 
 %% --- 5. Suivi de la frequence instantanee ------------------------------
 Nseg = round(0.02 * Fs);   % tranche tres courte : passage tres rapide
@@ -106,7 +101,7 @@ grid on;
 %
 %   On selectionne f_max au debut (avant t1) et f_min a la fin (apres t1).
 
-t1_estime = t_f_v(round(end/2));     % a affiner avec le spectrogramme
+t1_estime = t_f_v(round(end/2));    
 
 before = t_f_v < t1_estime - 0.1;
 after  = t_f_v > t1_estime + 0.1;
@@ -124,9 +119,8 @@ fprintf('f0 (estimee)   : %.1f Hz\n', f0_estime);
 fprintf('Vitesse estimee : %.2f m/s   (%.1f km/h)\n', v_estime, v_estime*3.6);
 
 %% --- 7. Verification par ajustement du modele Doppler ------------------
-%   On suppose un passage perpendiculaire a une distance d (a estimer
-%   par l'utilisateur si possible).
-d_suppose = 10;          % a adapter (m) - hypothese pour le fit
+%   On suppose un passage perpendiculaire a une distance d a estimer.
+d_suppose = 25;          % a adapter (m) - hypothese pour le fit
 modele = @(p, tt) p(1) * c ./ ( c + p(2)^2 * (tt - p(3)) ./ ...
                                 sqrt(d_suppose^2 + p(2)^2*(tt - p(3)).^2) );
 
@@ -149,3 +143,53 @@ legend('Mesure','Modele'); grid on;
 fprintf('\nFit non-lineaire (d suppose = %.1f m) :\n', d_suppose);
 fprintf('  f0 = %.1f Hz\n  v  = %.2f m/s (%.1f km/h)\n  t1 = %.2f s\n', ...
         f0_fit, v_fit, v_fit*3.6, t1_fit);
+    
+    
+    
+distances_d = [10, 15, 20, 25, 30];
+couleurs = lines(length(distances_d)); % Génère des couleurs distinctes
+
+figure('Name','Comparaison des ajustements selon d');
+plot(t_f_v, f_t_lisse, 'r-', 'LineWidth', 2, 'DisplayName', 'Mesure (lisse)'); 
+hold on;
+
+fprintf('--- Résultats du Fit pour différentes valeurs de d ---\n');
+
+for i = 1:length(distances_d)
+    d_suppose = distances_d(i);
+    
+    % Définition du modèle avec la distance actuelle
+    modele = @(p, tt) p(1) * c ./ ( c + p(2)^2 * (tt - p(3)) ./ ...
+                      sqrt(d_suppose^2 + p(2)^2*(tt - p(3)).^2) );
+
+    % Paramètres initiaux et bornes [f0, v, t1]
+    p0   = [f0_estime, v_estime, t1_estime];
+    lb   = [0, 0, 0];
+    ub   = [5000, 150, max(t_f_v)];
+    opts = optimset('Display','off');
+
+    % Calcul du fit
+    [p_fit, resnorm] = lsqcurvefit(modele, p0, t_f_v, f_t_lisse, lb, ub, opts);
+
+    % Extraction des résultats
+    f0_fit = p_fit(1); 
+    v_fit = p_fit(2); 
+    t1_fit = p_fit(3);
+
+    % Calcul de la courbe fittée pour affichage
+    f_modele = modele(p_fit, t_f_v);
+    
+    % Affichage sur le graphique
+    plot(t_f_v, f_modele, '--', 'Color', couleurs(i,:), 'LineWidth', 1.5, ...
+         'DisplayName', sprintf('d = %dm (v = %.1f km/h)', d_suppose, v_fit*3.6));
+
+    % Affichage des résultats en console
+    fprintf('d = %2d m | f0 = %6.1f Hz | v = %5.1f km/h | t1 = %5.2f s | Erreur = %.2f\n', ...
+            d_suppose, f0_fit, v_fit*3.6, t1_fit, resnorm);
+end
+
+xlabel('t (s)'); ylabel('f (Hz)');
+title('Influence de la distance d sur l''estimation de la vitesse');
+legend('show', 'Location', 'northeast');
+grid on;
+hold off;
