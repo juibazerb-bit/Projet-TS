@@ -1,5 +1,5 @@
 %% =====================================================================
-%  Projet TS1 - Objectif nÂ°3
+%  Projet TS1 - Objectif n°3
 %  Estimation de la vitesse d'une voiture aux 24 Heures du Mans
 %  a partir de l'enregistrement "Le_Mans_2023.wav".
 %
@@ -35,7 +35,7 @@ Nfft    = 2^nextpow2(8*Nwin);
 figure('Name','Spectrogramme Le Mans');
 spectrogram(x, hamming(Nwin), Noverl, Nfft, Fs, 'yaxis');
 title('Spectrogramme Le\_Mans\_2023.wav');
-colormap turbo;
+
 
 %   --> repondre visuellement aux questions suivantes avant de continuer :
 %       . quelle bande de frequence contient la raie principale ?
@@ -44,9 +44,9 @@ colormap turbo;
 %
 %   On parametre alors la suite avec les valeurs lues sur le graphique.
 
-fLow_band  = 600;          % a ajuster apres lecture du spectrogramme (Hz)
-fHigh_band = 1200;         % idem
-t1_lu      = N/Fs/2;       % par defaut : milieu de l'enregistrement
+fLow_band  = 400;          % a ajuster apres lecture du spectrogramme (Hz)
+fHigh_band = 1000;         % idem
+t1_lu      = 1.45 ; %N/Fs/2;       % par defaut : milieu de l'enregistrement
 
 %% --- 4. Filtrage selectif autour de la raie principale -----------------
 [bz, az] = butter(6, [fLow_band fHigh_band]/(Fs/2), 'bandpass');
